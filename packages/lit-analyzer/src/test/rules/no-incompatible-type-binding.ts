@@ -293,3 +293,39 @@ tsTest("Attribute binding: the target attribute is correctly type checked when g
 
 	hasNoDiagnostics(t, diagnostics);
 });
+
+const nothingAndNoChangeTests = [
+	["Attribute binding", (symbol: "nothing" | "noChange") => 'html`<a href="${' + symbol + '}">`'],
+	["Boolean binding", (symbol: "nothing" | "noChange") => 'html`<a ?disabled="${' + symbol + '}">`'],
+	["Property binding", (symbol: "nothing" | "noChange") => 'html`<a .href="${' + symbol + '}">`'],
+	["Event binding", (symbol: "nothing" | "noChange") => 'html`<a @click="${' + symbol + '}">`']
+] as const;
+
+for (const [testPrefix, template] of nothingAndNoChangeTests) {
+	tsTest(`${testPrefix}: lit's 'nothing' symbol is treated as type any in binding`, t => {
+		const { diagnostics } = getDiagnostics("const nothing = Symbol();" + template("nothing"));
+
+		hasNoDiagnostics(t, diagnostics);
+	});
+
+	tsTest(`${testPrefix}: lit's 'noChange' symbol is treated as type any in binding`, t => {
+		const { diagnostics } = getDiagnostics("const noChange = Symbol();" + template("noChange"));
+
+		hasNoDiagnostics(t, diagnostics);
+	});
+}
+
+// Regression testing a custom directive
+// https://github.com/runem/lit-analyzer/issues/207
+tsTest("Attribute binding: Custom directive returning 'nothing' symbol is allowed", t => {
+	const { diagnostics } = getDiagnostics({
+		text: `
+const nothing = Symbol();
+const cond = <T>(condition: boolean, value: T) => (condition ? value : nothing)
+
+html\`<input pattern=\${cond(true as Boolean, "[0-9]*")} >\`
+`,
+		includeLib: true
+	});
+	hasNoDiagnostics(t, diagnostics);
+});

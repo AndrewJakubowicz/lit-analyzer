@@ -56,3 +56,8 @@ tsTest("Event binding: Mixed value binding with first expression being callable 
 	const { diagnostics } = getDiagnostics('html`<input @change="foo${console.log}bar" />`');
 	hasNoDiagnostics(t, diagnostics);
 });
+
+tsTest("Event binding: Object with 'handleEvent' is totes great!", t => {
+	const { diagnostics } = getDiagnostics("function onClick() {}; html`<input @click=${{handleEvent: () => onClick(), once: true}} >`");
+	hasNoDiagnostics(t, diagnostics);
+});
